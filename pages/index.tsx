@@ -1,115 +1,97 @@
-import Image from "next/image";
-import { Geist, Geist_Mono } from "next/font/google";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import Link from "next/link";
+import { motion } from "framer-motion";
 
 export default function Home() {
   return (
-    <div
-      className={`${geistSans.className} ${geistMono.className} font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              pages/index.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <div className="min-h-screen bg-white text-gray-800 px-6 py-10">
+      {/* Header */}
+      <motion.header
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        className="flex flex-col md:flex-row justify-between items-center mb-12 gap-6 md:gap-0"
+      >
+        <h1 className="text-2xl font-bold text-blue-800 rounded-md px-2 py-1 bg-blue-100">
+          Questionnaire Hub
+        </h1>
+        <nav>
+          <ul className="flex flex-col md:flex-row gap-4 md:gap-6 text-gray-700 text-center">
+            <li className="hover:text-blue-800 transition">
+              <Link href="/login" className="block px-2 py-1">
+                Log In
+              </Link>
+            </li>
+            <li className="hover:text-blue-800 transition">
+              <Link href="/signup" className="block px-2 py-1">
+                Sign Up
+              </Link>
+            </li>
+          </ul>
+        </nav>
+      </motion.header>
+
+      {/* Welcome Section */}
+      <motion.section
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 1 }}
+        className="text-center mb-16 max-w-3xl mx-auto px-6 rounded-lg bg-gray-50 shadow-lg py-10"
+      >
+        <h2 className="text-3xl sm:text-4xl font-extrabold mb-4 text-blue-800">
+          Welcome
+        </h2>
+        <p className="text-gray-600 text-base sm:text-lg leading-relaxed">
+          This is where what you have in mind becomes real. Log in, create an account, and feel right at home. 
+          Here, your thoughts matter — every question you create can inspire, connect, and solve problems.
+        </p>
+      </motion.section>
+
+      {/* Sections */}
+      <section className="max-w-4xl mx-auto space-y-10">
+        {[
+          {
+            title: "Express Your Thoughts",
+            desc: "Your ideas matter. Create custom questionnaires to share your knowledge, gather opinions, or spark meaningful discussions.",
+          },
+          {
+            title: "Discover New Perspectives",
+            desc: "Browse through a variety of questionnaires created by others. Learn from different viewpoints and uncover insights you never expected.",
+          },
+          {
+            title: "Connect and Collaborate",
+            desc: "Engage with people who share your curiosity. Build connections, exchange ideas, and grow your network through shared knowledge.",
+          },
+          {
+            title: "Your Home for Ideas",
+            desc: "Sign up today, log in when you’re ready, and feel at home in a space designed for thinkers, creators, and learners like you.",
+          },
+        ].map((section, i) => (
+          <motion.div
+            key={i}
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, delay: i * 0.2 }}
+            className="bg-white p-6 rounded-xl shadow-md border border-gray-200"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=default-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+            <h3 className="text-xl sm:text-2xl font-semibold mb-3 text-blue-700">
+              {section.title}
+            </h3>
+            <p className="text-gray-600 text-sm sm:text-base">{section.desc}</p>
+          </motion.div>
+        ))}
+      </section>
+
+      {/* Footer */}
+      <motion.footer
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+        className="mt-16 text-center text-sm text-gray-500"
+      >
+        Get contacts inside the web
+      </motion.footer>
     </div>
   );
 }
