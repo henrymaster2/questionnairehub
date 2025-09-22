@@ -3,65 +3,145 @@ import { useEffect, useState, useRef } from "react";
 import io, { Socket } from "socket.io-client";
 
 type Message = {
+  id?: number;
   senderId: number;
   receiverId: number;
   content: string;
+  type: "text" | "image" | "file";
+  createdAt?: string;
   timestamp?: string;
 };
 
 export default function ChatPage() {
-  const userId = 1; // logged-in user
-  const adminId = 2; // admin
+  // Replace with actual logged-in user id (from session/auth)
+  const userId = 2; // Example: logged-in user
+  const adminId = 1; // Admin is always id=1 (as set in Prisma)
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
+  const [file, setFile] = useState<File | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
 
+  // Fetch old messages
   useEffect(() => {
-    // Initialize socket
+    const fetchMessages = async () => {
+      const res = await fetch(
+        `/api/messages?userId=${userId}&adminId=${adminId}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setMessages(
+          data.map((msg: any) => ({
+            ...msg,
+            timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+          }))
+        );
+        scrollToBottom();
+      }
+    };
+    fetchMessages();
+  }, []);
+
+  // Socket setup
+  useEffect(() => {
     socketRef.current = io();
 
-    socketRef.current.emit("join", userId);
+    socketRef.current.emit("join", { userId });
 
-    socketRef.current.on("receive_message", (msg: Message) => {
+    socketRef.current.on("message", (msg: Message) => {
       setMessages((prev) => [
         ...prev,
         {
           ...msg,
-          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          timestamp: new Date(msg.createdAt || Date.now()).toLocaleTimeString(
+            [],
+            { hour: "2-digit", minute: "2-digit" }
+          ),
         },
       ]);
       scrollToBottom();
     });
 
-    // TypeScript-safe cleanup
     return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
+      socketRef.current?.disconnect();
+      socketRef.current = null;
     };
-  }, []);
+  }, [userId]);
 
-  const sendMessage = () => {
-    if (!newMsg.trim() || !socketRef.current) return;
+  // Send message
+  const sendMessage = async () => {
+    if ((!newMsg.trim() && !file) || !socketRef.current) return;
 
-    const msgData: Message = {
+    let msgData: Partial<Message> = {
       senderId: userId,
       receiverId: adminId,
-      content: newMsg,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    socketRef.current.emit("send_message", msgData);
-    setMessages((prev) => [...prev, msgData]);
+    if (file) {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const { url, type } = await uploadRes.json();
+
+      msgData = {
+        ...msgData,
+        content: url,
+        type,
+      };
+
+      setFile(null);
+    } else {
+      msgData = {
+        ...msgData,
+        content: newMsg,
+        type: "text",
+      };
+    }
+
+    // Save to DB
+    const res = await fetch("/api/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(msgData),
+    });
+    const savedMsg = await res.json();
+
+    const finalMsg: Message = {
+      ...savedMsg,
+      timestamp: new Date(savedMsg.createdAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+    };
+
+    // Emit via socket
+    socketRef.current.emit("sendMessage", {
+      senderId: userId,
+      content: finalMsg.content,
+    });
+
+    // Update UI
+    setMessages((prev) => [...prev, finalMsg]);
     setNewMsg("");
     scrollToBottom();
   };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
   };
 
   return (
@@ -76,8 +156,29 @@ export default function ChatPage() {
           return (
             <div key={i} className={`message-row ${isUser ? "user" : "admin"}`}>
               <div className="message-bubble">
-                <span className="message-text">{m.content}</span>
-                {m.timestamp && <span className="message-time">{m.timestamp}</span>}
+                {m.type === "text" && (
+                  <span className="message-text">{m.content}</span>
+                )}
+                {m.type === "image" && (
+                  <img
+                    src={m.content}
+                    alt="uploaded"
+                    className="max-w-xs rounded-lg"
+                  />
+                )}
+                {m.type === "file" && (
+                  <a
+                    href={m.content}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    📎 Download File
+                  </a>
+                )}
+                {m.timestamp && (
+                  <span className="message-time">{m.timestamp}</span>
+                )}
               </div>
             </div>
           );
@@ -94,17 +195,25 @@ export default function ChatPage() {
           placeholder="Type a message..."
           onKeyPress={(e) => e.key === "Enter" && sendMessage()}
         />
+        <input
+          type="file"
+          onChange={handleFileChange}
+          className="hidden"
+          id="fileInput"
+        />
+        <label htmlFor="fileInput" className="file-label">
+          📎
+        </label>
         <button onClick={sendMessage}>➤</button>
       </div>
 
-      {/* CSS */}
+      {/* Styles (unchanged) */}
       <style jsx>{`
         .chat-container {
           display: flex;
           flex-direction: column;
           height: 100vh;
           width: 100%;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
           background-color: #ece5dd;
         }
         .chat-header {
@@ -136,24 +245,22 @@ export default function ChatPage() {
           max-width: 75%;
           padding: 12px 16px;
           border-radius: 20px;
-          position: relative;
           display: flex;
           flex-direction: column;
           line-height: 1.4;
         }
         .message-row.user .message-bubble {
-          background-color: #dcf8c6; /* WhatsApp green */
-          color: #000; /* black text */
-          box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+          background-color: #dcf8c6;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
         }
         .message-row.admin .message-bubble {
-          background-color: #fff; /* white background */
-          color: #222; /* dark gray text */
-          box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+          background-color: #fff;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
         }
         .message-text {
           font-size: 16px;
           word-wrap: break-word;
+          color: #000;
         }
         .message-time {
           font-size: 11px;
@@ -169,17 +276,20 @@ export default function ChatPage() {
           display: flex;
           padding: 10px;
           background-color: #f0f0f0;
-          box-shadow: 0 -1px 3px rgba(0,0,0,0.1);
+          box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.1);
+          align-items: center;
         }
-        .chat-input input {
+        .chat-input input[type="text"] {
           flex: 1;
           padding: 12px 15px;
           border-radius: 25px;
           border: 1px solid #ccc;
-          outline: none;
           font-size: 16px;
-          background-color: #fff;
           color: #000;
+          background-color: #fff;
+        }
+        .chat-input input[type="text"]::placeholder {
+          color: #888;
         }
         .chat-input button {
           margin-left: 10px;
@@ -191,13 +301,10 @@ export default function ChatPage() {
           cursor: pointer;
           font-size: 18px;
         }
-        @media (max-width: 600px) {
-          .message-bubble {
-            max-width: 85%;
-          }
-          .chat-input input {
-            font-size: 14px;
-          }
+        .file-label {
+          margin-left: 10px;
+          cursor: pointer;
+          font-size: 20px;
         }
       `}</style>
     </div>

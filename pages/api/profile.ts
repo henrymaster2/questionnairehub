@@ -19,7 +19,7 @@ export default async function handler(
       return res.status(401).json({ message: "Not authenticated" });
     }
 
-    // Find the user in the database
+    // Find the user in the database 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
       select: {

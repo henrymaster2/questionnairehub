@@ -19,10 +19,10 @@ model User {
   role           Role                 @default(USER) // USER or ADMIN
   createdAt      DateTime             @default(now())
 
-  questionnaires Questionnaire[]
+  questionnaires   Questionnaire[]
   sentMessages     Message[]          @relation("SentMessages")
   receivedMessages Message[]          @relation("ReceivedMessages")
-  resetTokens      PasswordResetToken[]   // relation for password reset tokens
+  resetTokens      PasswordResetToken[]
 }
 
 // -------- Questionnaire --------
@@ -41,7 +41,7 @@ model Questionnaire {
   preferredTech     String?
   budget            String
   timeline          String
-  communication     String?   // <-- optional
+  communication     String?
   backendNeeded     Boolean
   hostingDeployment Boolean
   additionalInfo    String?
@@ -53,14 +53,17 @@ model Questionnaire {
 
 // -------- Message --------
 model Message {
-  id         Int      @id @default(autoincrement())
-  senderId   Int
-  receiverId Int
-  content    String
-  createdAt  DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  senderId    Int
+  receiverId  Int
+  content     String
+  createdAt   DateTime @default(now())
 
-  sender     User @relation("SentMessages", fields: [senderId], references: [id])
-  receiver   User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  sender   User @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id])
+
+  @@index([senderId, receiverId])
+  @@index([createdAt])
 }
 
 // -------- Password Reset Token --------
@@ -72,7 +75,7 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
   expiresAt DateTime
 
-  @@index([token])          // fast lookups when user clicks link
+  @@index([token])
   @@index([userId, expiresAt])
 }
 

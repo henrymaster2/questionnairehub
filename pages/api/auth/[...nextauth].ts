@@ -11,7 +11,7 @@ const prisma = new PrismaClient();
 declare module "next-auth" {
   interface Session {
     user: {
-      id: string;
+      id: number;
       isAdmin: boolean;
     } & DefaultSession["user"];
   }
@@ -19,7 +19,7 @@ declare module "next-auth" {
 
 declare module "next-auth/jwt" {
   interface JWT {
-    id: string;
+    id: number;
     isAdmin: boolean;
   }
 }
@@ -43,9 +43,11 @@ export const authOptions: NextAuthOptions = {
         // --- 1) ENV-based Admin login ---
         const adminEmail = process.env.ADMIN_EMAIL;
         const adminPassword = process.env.ADMIN_PASSWORD;
+        const adminId = Number(process.env.ADMIN_ID ?? -1);
+
         if (identifier === adminEmail && password === adminPassword) {
           return {
-            id: "admin", // fixed id for env admin
+            id: adminId.toString(), // NextAuth expects string
             name: "Admin",
             email: adminEmail,
             isAdmin: true,
@@ -83,7 +85,7 @@ export const authOptions: NextAuthOptions = {
   callbacks: {
     async jwt({ token, user }: { token: JWT; user?: any }) {
       if (user) {
-        token.id = user.id;
+        token.id = parseInt(user.id, 10);
         token.isAdmin = user.isAdmin;
       }
       return token;
