@@ -30,7 +30,9 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("/api/questionnaires/user", { credentials: "include" });
+        const res = await fetch("/api/questionnaires/user", {
+          credentials: "include",
+        });
         if (!res.ok) throw new Error("Failed to fetch questionnaires");
         const data = await res.json();
         setQuestionnaires(data.questionnaires || []);
@@ -42,6 +44,22 @@ export default function AdminDashboard() {
     }
     fetchData();
   }, []);
+
+  // ✅ Logout function
+  const handleLogout = async () => {
+    try {
+      // Call your backend logout API (adjust endpoint if different)
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout failed:", err);
+    } finally {
+      // Redirect to login page
+      router.push("/login");
+    }
+  };
 
   // ✅ Updated PDF generation function
   const handleDownloadPDF = (q: Questionnaire) => {
@@ -103,7 +121,11 @@ export default function AdminDashboard() {
     y += 6;
     doc.text(`Backend Needed: ${q.backendNeeded ? "Yes" : "No"}`, 10, y);
     y += 6;
-    doc.text(`Hosting/Deployment: ${q.hostingDeployment ? "Yes" : "No"}`, 10, y);
+    doc.text(
+      `Hosting/Deployment: ${q.hostingDeployment ? "Yes" : "No"}`,
+      10,
+      y
+    );
     y += 6;
 
     if (q.additionalInfo) doc.text(`Additional Info: ${q.additionalInfo}`, 10, y);
@@ -160,7 +182,10 @@ export default function AdminDashboard() {
                   </button>
                 </li>
                 <li>
-                  <button className="block w-full text-left px-4 py-2 hover:bg-red-100 text-red-600 font-semibold">
+                  <button
+                    onClick={handleLogout}
+                    className="block w-full text-left px-4 py-2 hover:bg-red-100 text-red-600 font-semibold"
+                  >
                     Logout
                   </button>
                 </li>
@@ -173,7 +198,9 @@ export default function AdminDashboard() {
       </motion.header>
 
       <div className="p-6 overflow-y-auto">
-        <h2 className="text-2xl font-bold mb-4 text-blue-800">Questionnaires</h2>
+        <h2 className="text-2xl font-bold mb-4 text-blue-800">
+          Questionnaires
+        </h2>
 
         {loading ? (
           <p className="text-gray-600">Loading...</p>
@@ -188,16 +215,34 @@ export default function AdminDashboard() {
               >
                 <div>
                   <p className="font-semibold mb-1">{q.name}</p>
-                  <p className="text-gray-700">{q.email} | {q.phone}</p>
-                  <p className="text-gray-700 mt-1">Project Type: {q.projectType}</p>
+                  <p className="text-gray-700">
+                    {q.email} | {q.phone}
+                  </p>
+                  <p className="text-gray-700 mt-1">
+                    Project Type: {q.projectType}
+                  </p>
                   <p className="text-gray-700 mt-1">{q.description}</p>
-                  {q.preferredTech && <p className="text-gray-700 mt-1">Tech: {q.preferredTech}</p>}
+                  {q.preferredTech && (
+                    <p className="text-gray-700 mt-1">Tech: {q.preferredTech}</p>
+                  )}
                   <p className="text-gray-700 mt-1">Budget: {q.budget}</p>
                   <p className="text-gray-700 mt-1">Timeline: {q.timeline}</p>
-                  {q.communication && <p className="text-gray-700 mt-1">Communication: {q.communication}</p>}
-                  <p className="text-gray-700 mt-1">Backend Needed: {q.backendNeeded ? "Yes" : "No"}</p>
-                  <p className="text-gray-700 mt-1">Hosting: {q.hostingDeployment ? "Yes" : "No"}</p>
-                  {q.additionalInfo && <p className="text-gray-700 mt-1">Additional: {q.additionalInfo}</p>}
+                  {q.communication && (
+                    <p className="text-gray-700 mt-1">
+                      Communication: {q.communication}
+                    </p>
+                  )}
+                  <p className="text-gray-700 mt-1">
+                    Backend Needed: {q.backendNeeded ? "Yes" : "No"}
+                  </p>
+                  <p className="text-gray-700 mt-1">
+                    Hosting: {q.hostingDeployment ? "Yes" : "No"}
+                  </p>
+                  {q.additionalInfo && (
+                    <p className="text-gray-700 mt-1">
+                      Additional: {q.additionalInfo}
+                    </p>
+                  )}
                 </div>
                 <button
                   onClick={() => handleDownloadPDF(q)}

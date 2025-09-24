@@ -1,31 +1,29 @@
 // pages/admin-chats.tsx
 import { useEffect, useState, useRef } from "react";
-import io, { Socket } from "socket.io-client";
 
 type Message = {
-  senderEmail: string;
-  receiverEmail: string;
+  id: number;
+  senderId?: number | null;
+  receiverId?: number | null;
+  senderType: "USER" | "ADMIN";
   content: string;
-  type: "text" | "image" | "file";
-  timestamp?: string;
+  createdAt: string;
 };
 
 type User = {
+  id: number;
   email: string;
   name: string;
   unread?: number;
 };
 
 export default function AdminChats() {
-  const adminEmail = "admin@example.com"; // ✅ replace with real admin session email
-
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMsg, setNewMsg] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const socketRef = useRef<Socket | null>(null);
 
   // Load users
   useEffect(() => {
@@ -43,65 +41,22 @@ export default function AdminChats() {
     fetchUsers();
   }, []);
 
-  // Setup socket
-  useEffect(() => {
-    socketRef.current = io();
-
-    socketRef.current.emit("join", adminEmail);
-
-    socketRef.current.on("receive_message", (msg: Message) => {
-      if (selectedUser && msg.senderEmail === selectedUser.email) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            ...msg,
-            timestamp: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          },
-        ]);
-        scrollToBottom();
-      } else {
-        setUsers((prev) =>
-          prev.map((u) =>
-            u.email === msg.senderEmail
-              ? { ...u, unread: (u.unread || 0) + 1 }
-              : u
-          )
-        );
-      }
-    });
-
-    return () => {
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
-    };
-  }, [selectedUser]);
-
+  // Load messages for a user
   const selectUser = async (user: User) => {
     setSelectedUser(user);
+    setSidebarOpen(false);
     setUsers((prev) =>
-      prev.map((u) => (u.email === user.email ? { ...u, unread: 0 } : u))
+      prev.map((u) => (u.id === user.id ? { ...u, unread: 0 } : u))
     );
+    await loadMessages(user.id);
+  };
 
+  const loadMessages = async (userId: number) => {
     try {
-      const res = await fetch(
-        `/api/messages?userEmail=${encodeURIComponent(user.email)}&adminEmail=${encodeURIComponent(adminEmail)}`
-      );
+      const res = await fetch(`/api/messages?userId=${userId}`);
       if (res.ok) {
         const data = await res.json();
-        setMessages(
-          data.map((msg: any) => ({
-            ...msg,
-            timestamp: new Date(msg.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-          }))
-        );
+        setMessages(data);
         scrollToBottom();
       }
     } catch (err) {
@@ -109,79 +64,51 @@ export default function AdminChats() {
     }
   };
 
+  // Poll messages every 5 seconds
+  useEffect(() => {
+    if (!selectedUser) return;
+    const interval = setInterval(() => {
+      loadMessages(selectedUser.id);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [selectedUser]);
+
+  // Send a message
   const sendMessage = async () => {
-    if ((!newMsg.trim() && !file) || !socketRef.current || !selectedUser) return;
+    if (!newMsg.trim() || !selectedUser) return;
 
-    let msgData: Message;
+    const msgData = {
+      senderType: "ADMIN",
+      receiverId: selectedUser.id,
+      content: newMsg,
+    };
 
-    if (file) {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const uploadRes = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const { url, type } = await uploadRes.json();
-
-      msgData = {
-        senderEmail: adminEmail,
-        receiverEmail: selectedUser.email,
-        content: url,
-        type,
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-
-      setFile(null);
-    } else {
-      msgData = {
-        senderEmail: adminEmail,
-        receiverEmail: selectedUser.email,
-        content: newMsg,
-        type: "text",
-        timestamp: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      };
-    }
-
-    // Save to DB
-    await fetch("/api/messages", {
+    const res = await fetch("/api/messages", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(msgData),
     });
 
-    socketRef.current.emit("send_message", msgData);
-    setMessages((prev) => [...prev, msgData]);
-    setNewMsg("");
-    scrollToBottom();
+    if (res.ok) {
+      setNewMsg("");
+      await loadMessages(selectedUser.id);
+    }
   };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
-    }
-  };
-
   return (
     <div className="admin-chat-container">
       {/* Sidebar */}
-      <div className="sidebar">
+      <div className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <h3>Users</h3>
         {users.map((u) => (
           <div
-            key={u.email}
+            key={u.id}
             className={`user-item ${
-              selectedUser?.email === u.email ? "selected" : ""
+              selectedUser?.id === u.id ? "selected" : ""
             }`}
             onClick={() => selectUser(u)}
           >
@@ -194,43 +121,33 @@ export default function AdminChats() {
       {/* Chat Panel */}
       <div className="chat-panel">
         <div className="chat-header">
+          <button
+            className="menu-btn"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            ☰
+          </button>
           {selectedUser
             ? `Chat with ${selectedUser.name || selectedUser.email}`
             : "Select a user"}
         </div>
 
         <div className="chat-messages">
-          {messages.map((m, i) => {
-            const isAdmin = m.senderEmail === adminEmail;
+          {messages.map((m) => {
+            const isAdmin = m.senderType === "ADMIN";
             return (
               <div
-                key={i}
+                key={m.id}
                 className={`message-row ${isAdmin ? "admin" : "user"}`}
               >
                 <div className="message-bubble">
-                  {m.type === "text" && (
-                    <span className="message-text">{m.content}</span>
-                  )}
-                  {m.type === "image" && (
-                    <img
-                      src={m.content}
-                      alt="uploaded"
-                      className="max-w-xs rounded-lg"
-                    />
-                  )}
-                  {m.type === "file" && (
-                    <a
-                      href={m.content}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 underline"
-                    >
-                      📎 Download File
-                    </a>
-                  )}
-                  {m.timestamp && (
-                    <span className="message-time">{m.timestamp}</span>
-                  )}
+                  <span className="message-text">{m.content}</span>
+                  <span className="message-time">
+                    {new Date(m.createdAt).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
                 </div>
               </div>
             );
@@ -247,26 +164,18 @@ export default function AdminChats() {
               placeholder="Type a message..."
               onKeyPress={(e) => e.key === "Enter" && sendMessage()}
             />
-            <input
-              type="file"
-              onChange={handleFileChange}
-              className="hidden"
-              id="fileInput"
-            />
-            <label htmlFor="fileInput" className="file-label">
-              📎
-            </label>
             <button onClick={sendMessage}>➤</button>
           </div>
         )}
       </div>
 
-      {/* CSS (same as before) */}
+      {/* Styles */}
       <style jsx>{`
         .admin-chat-container {
           display: flex;
           height: 100vh;
           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+          position: relative;
         }
         .sidebar {
           width: 250px;
@@ -315,6 +224,17 @@ export default function AdminChats() {
           color: #fff;
           font-weight: bold;
           font-size: 18px;
+          display: flex;
+          align-items: center;
+        }
+        .menu-btn {
+          display: none;
+          margin-right: 10px;
+          font-size: 20px;
+          background: none;
+          border: none;
+          color: white;
+          cursor: pointer;
         }
         .chat-messages {
           flex: 1;
@@ -389,21 +309,28 @@ export default function AdminChats() {
           cursor: pointer;
           font-size: 18px;
         }
-        .file-label {
-          margin-left: 10px;
-          cursor: pointer;
-          font-size: 20px;
-        }
         @media (max-width: 768px) {
-          .sidebar { width: 200px; }
-          .chat-input { left: 200px; width: calc(100% - 200px); }
-        }
-        @media (max-width: 600px) {
-          .sidebar { display: none; }
-          .chat-input { left: 0; width: 100%; }
+          .sidebar {
+            position: fixed;
+            left: -250px;
+            top: 0;
+            bottom: 0;
+            height: 100%;
+            transition: left 0.3s ease;
+            z-index: 10;
+          }
+          .sidebar.open {
+            left: 0;
+          }
+          .menu-btn {
+            display: inline-block;
+          }
+          .chat-input {
+            left: 0;
+            width: 100%;
+          }
         }
       `}</style>
     </div>
   );
 }
-
