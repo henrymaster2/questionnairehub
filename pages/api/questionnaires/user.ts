@@ -2,32 +2,39 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Questionnaire, User } from "@prisma/client";
 
 const prisma = new PrismaClient();
+
+// Typed user session
+type SessionUser = {
+  id: number;
+  isAdmin: boolean;
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const session = await getServerSession(req, res, authOptions);
-    if (!session || !(session.user as any).id) {
+    const user = session?.user as SessionUser | undefined;
+
+    if (!user || !user.id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const userId = (session.user as any).id;
-    const isAdmin = (session.user as any).isAdmin;
+    let questionnaires: (Questionnaire & { user?: User })[];
 
-    let questionnaires;
-
-    if (isAdmin) {
-      // Admin: fetch all questionnaires
+    if (user.isAdmin) {
+      // Admin: fetch all questionnaires with user info
       questionnaires = await prisma.questionnaire.findMany({
         orderBy: { createdAt: "desc" },
+        include: { user: true },
       });
     } else {
       // Regular user: fetch only their questionnaires
       questionnaires = await prisma.questionnaire.findMany({
-        where: { userId: Number(userId) },
+        where: { userId: user.id },
         orderBy: { createdAt: "desc" },
+        include: { user: true },
       });
     }
 
@@ -36,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       id: q.id,
       name: q.name,
       email: q.email,
-      phone: q.userId ? q.userId.toString() : "", // optional, can include phone from user join if needed
+      phone: q.user?.phone || "", // fetch phone from related user
       projectType: q.projectType,
       description: q.description,
       preferredTech: q.preferredTech,
