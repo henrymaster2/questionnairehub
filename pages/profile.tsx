@@ -7,10 +7,10 @@ type User = {
   id: number;
   name: string;
   email: string;
-  phone: string; // Full number including country code
+  phone: string;
   countryCode: string;
   createdAt: string | null;
-  profilePic?: string; // Base64 string or URL
+  profilePic?: string;
 };
 
 export default function Profile() {
@@ -28,7 +28,7 @@ export default function Profile() {
     }
   }, [status]);
 
-  // Fetch user profile from backend
+  // Fetch user profile
   const fetchUser = async () => {
     try {
       const res = await fetch("/api/profile", { cache: "no-store" });
@@ -44,7 +44,7 @@ export default function Profile() {
     if (status === "authenticated") fetchUser();
   }, [status]);
 
-  // Generate preview for selected image
+  // Preview selected image
   useEffect(() => {
     if (!selectedImage) {
       setPreview(null);
@@ -66,7 +66,6 @@ export default function Profile() {
     setLoading(true);
 
     try {
-      // Convert image to Base64
       const toBase64 = (file: File) =>
         new Promise<string>((resolve, reject) => {
           const reader = new FileReader();
@@ -79,7 +78,6 @@ export default function Profile() {
 
       const base64Image = await toBase64(selectedImage);
 
-      // Send PUT request to update profile
       const res = await fetch("/api/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -89,7 +87,7 @@ export default function Profile() {
       if (!res.ok) throw new Error("Failed to update profile");
 
       const data = await res.json();
-      setUser(data.user); // update UI with saved image
+      setUser(data.user);
       setSelectedImage(null);
       setPreview(null);
     } catch (error) {
@@ -105,18 +103,20 @@ export default function Profile() {
   };
 
   if (status === "loading" || !user)
-    return <p className="text-center mt-20 text-gray-600">Loading profile...</p>;
+    return <p className="text-center mt-20 text-gray-300">Loading profile...</p>;
 
   const joinedDate = user.createdAt ? new Date(user.createdAt) : null;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-      <h1 className="text-4xl font-bold mb-8 text-blue-800">My Profile</h1>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-10 bg-gradient-to-br from-indigo-900 via-teal-800 to-cyan-700 text-white">
+      <h1 className="text-4xl font-extrabold mb-8 text-cyan-300 drop-shadow-md">
+        My Profile
+      </h1>
 
-      <div className="bg-white shadow-lg rounded-xl p-8 w-full max-w-md flex flex-col items-center space-y-6">
+      <div className="bg-black/40 backdrop-blur-md shadow-2xl border border-white/20 rounded-2xl p-8 w-full max-w-md flex flex-col items-center space-y-6">
         {/* Profile Picture */}
-        <div className="flex flex-col items-center space-y-2">
-          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-blue-300 bg-gray-100 flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-3">
+          <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-cyan-300 bg-gray-100 flex items-center justify-center">
             {preview || user.profilePic ? (
               <img
                 src={preview || user.profilePic}
@@ -128,7 +128,7 @@ export default function Profile() {
             )}
           </div>
 
-          <label className="mt-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg cursor-pointer text-sm transition">
+          <label className="mt-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg cursor-pointer text-sm transition">
             {selectedImage ? selectedImage.name : "Choose Profile Picture"}
             <input
               type="file"
@@ -152,25 +152,25 @@ export default function Profile() {
         </div>
 
         {/* User Info */}
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-4 text-gray-200">
           <div className="flex justify-between">
-            <span className="font-semibold text-gray-700">Name:</span>
-            <span className="text-gray-900">{user.name}</span>
+            <span className="font-semibold">Name:</span>
+            <span>{user.name}</span>
           </div>
 
           <div className="flex justify-between">
-            <span className="font-semibold text-gray-700">Email:</span>
-            <span className="text-gray-900">{user.email}</span>
+            <span className="font-semibold">Email:</span>
+            <span>{user.email}</span>
           </div>
 
           <div className="flex justify-between">
-            <span className="font-semibold text-gray-700">Phone:</span>
-            <span className="text-gray-900">{user.phone}</span>
+            <span className="font-semibold">Phone:</span>
+            <span>{user.phone}</span>
           </div>
 
           <div className="flex justify-between">
-            <span className="font-semibold text-gray-700">Joined:</span>
-            <span className="text-gray-900">
+            <span className="font-semibold">Joined:</span>
+            <span>
               {joinedDate && !isNaN(joinedDate.getTime())
                 ? joinedDate.toLocaleDateString()
                 : "N/A"}

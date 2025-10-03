@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { getSession } from "next-auth/react";
+import Link from "next/link";
 
 interface User {
   id: number;
@@ -17,19 +18,18 @@ export default function Questionnaire() {
     email: "",
     projectType: "",
     description: "",
-    technologies: "",             // maps to preferredTech
+    technologies: "",
     budget: "",
     timeline: "",
-    preferredCommunication: "",   // maps to communication (optional)
-    hasBackend: false,            // maps to backendNeeded
-    needHosting: false,           // maps to hostingDeployment
-    extraNotes: "",               // maps to additionalInfo
+    preferredCommunication: "",
+    hasBackend: false,
+    needHosting: false,
+    extraNotes: "",
   });
 
   const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
   const [message, setMessage] = useState<string>("");
 
-  // Fetch current user to prefill name/email
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -37,7 +37,7 @@ export default function Questionnaire() {
         if (!session?.user) return;
 
         const userData: User = {
-          id: session.user.id ? Number(session.user.id) : 0, // convert string to number safely
+          id: session.user.id ? Number(session.user.id) : 0,
           name: session.user.name ?? "",
           email: session.user.email ?? "",
         };
@@ -72,7 +72,6 @@ export default function Questionnaire() {
     }
   };
 
-  // Build payload that the API understands (names -> Prisma)
   const buildPayload = () => ({
     name: formData.name,
     email: formData.email,
@@ -81,7 +80,7 @@ export default function Questionnaire() {
     preferredTech: formData.technologies || null,
     budget: formData.budget,
     timeline: formData.timeline,
-    communication: formData.preferredCommunication || null, // optional
+    communication: formData.preferredCommunication || null,
     backendNeeded: formData.hasBackend,
     hostingDeployment: formData.needHosting,
     additionalInfo: formData.extraNotes || null,
@@ -110,7 +109,6 @@ export default function Questionnaire() {
       setStatus("submitted");
       setMessage("✅ Questionnaire submitted successfully! (Pending Review)");
 
-      // Reset (keep name/email if they were prefilled)
       setFormData((prev) => ({
         name: user?.name ?? "",
         email: user?.email ?? "",
@@ -132,27 +130,27 @@ export default function Questionnaire() {
   };
 
   return (
-    <div className="min-h-screen bg-white text-gray-800 px-4 py-6 sm:px-6">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-900 via-teal-800 to-cyan-700 text-white px-4 py-10">
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="max-w-3xl mx-auto p-6 rounded-xl shadow-md border border-gray-200 bg-gray-50"
+        className="w-full max-w-3xl p-8 rounded-2xl shadow-xl border border-white/20 bg-black/40 backdrop-blur-md"
       >
-        <h1 className="text-2xl font-bold text-blue-800 mb-6 text-center">
+        <h1 className="text-3xl font-bold text-cyan-300 mb-8 text-center drop-shadow-md">
           Fill the Software Questionnaire
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Name */}
           <div>
-            <label className="block mb-2 font-medium text-gray-700">Name</label>
+            <label className="block mb-2 font-medium text-cyan-200">Name</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:ring-2 focus:ring-cyan-400"
               placeholder="Your full name"
               required
             />
@@ -160,13 +158,13 @@ export default function Questionnaire() {
 
           {/* Email */}
           <div>
-            <label className="block mb-2 font-medium text-gray-700">Email</label>
+            <label className="block mb-2 font-medium text-cyan-200">Email</label>
             <input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:ring-2 focus:ring-cyan-400"
               placeholder="you@example.com"
               required
             />
@@ -174,12 +172,12 @@ export default function Questionnaire() {
 
           {/* Project Type */}
           <div>
-            <label className="block mb-2 font-medium text-gray-700">Type of Software Needed</label>
+            <label className="block mb-2 font-medium text-cyan-200">Type of Software Needed</label>
             <select
               name="projectType"
               value={formData.projectType}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 rounded-lg border border-white/20 bg-gray-800 text-white focus:ring-2 focus:ring-cyan-400"
               required
             >
               <option value="">Select...</option>
@@ -194,39 +192,39 @@ export default function Questionnaire() {
 
           {/* Description */}
           <div>
-            <label className="block mb-2 font-medium text-gray-700">Project Description</label>
+            <label className="block mb-2 font-medium text-cyan-200">Project Description</label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows={4}
-              className="w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500"
-              placeholder="Briefly describe what you need, the problem it solves, and the goals."
+              className="w-full p-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:ring-2 focus:ring-cyan-400"
+              placeholder="Briefly describe your project..."
               required
             />
           </div>
 
           {/* Preferred Technologies */}
           <div>
-            <label className="block mb-2 font-medium text-gray-700">Preferred Technologies (optional)</label>
+            <label className="block mb-2 font-medium text-cyan-200">Preferred Technologies (optional)</label>
             <input
               type="text"
               name="technologies"
               value={formData.technologies}
               onChange={handleChange}
               placeholder="e.g. React, Node.js, PostgreSQL, Flutter"
-              className="w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:ring-2 focus:ring-cyan-400"
             />
           </div>
 
-          {/* Budget (KSH) */}
+          {/* Budget */}
           <div>
-            <label className="block mb-2 font-medium text-gray-700">Budget Range (KSH)</label>
+            <label className="block mb-2 font-medium text-cyan-200">Budget Range (KSH)</label>
             <select
               name="budget"
               value={formData.budget}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 rounded-lg border border-white/20 bg-gray-800 text-white focus:ring-2 focus:ring-cyan-400"
               required
             >
               <option value="">Select...</option>
@@ -240,12 +238,12 @@ export default function Questionnaire() {
 
           {/* Timeline */}
           <div>
-            <label className="block mb-2 font-medium text-gray-700">Timeline</label>
+            <label className="block mb-2 font-medium text-cyan-200">Timeline</label>
             <select
               name="timeline"
               value={formData.timeline}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 rounded-lg border border-white/20 bg-gray-800 text-white focus:ring-2 focus:ring-cyan-400"
               required
             >
               <option value="">Select...</option>
@@ -256,14 +254,14 @@ export default function Questionnaire() {
             </select>
           </div>
 
-          {/* Preferred Communication (optional) */}
+          {/* Preferred Communication */}
           <div>
-            <label className="block mb-2 font-medium text-gray-700">Preferred Communication</label>
+            <label className="block mb-2 font-medium text-cyan-200">Preferred Communication</label>
             <select
               name="preferredCommunication"
               value={formData.preferredCommunication}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 rounded-lg border border-white/20 bg-gray-800 text-white focus:ring-2 focus:ring-cyan-400"
             >
               <option value="">Select...</option>
               <option value="email">Email</option>
@@ -280,9 +278,9 @@ export default function Questionnaire() {
               name="hasBackend"
               checked={formData.hasBackend}
               onChange={handleChange}
-              className="h-4 w-4 text-blue-600"
+              className="h-4 w-4 text-cyan-400 bg-black/40 border-white/30"
             />
-            <label className="text-gray-700">Do you require backend functionality?</label>
+            <label className="text-gray-200">Do you require backend functionality?</label>
           </div>
 
           <div className="flex items-center gap-2">
@@ -291,20 +289,20 @@ export default function Questionnaire() {
               name="needHosting"
               checked={formData.needHosting}
               onChange={handleChange}
-              className="h-4 w-4 text-blue-600"
+              className="h-4 w-4 text-cyan-400 bg-black/40 border-white/30"
             />
-            <label className="text-gray-700">Do you need hosting & deployment support?</label>
+            <label className="text-gray-200">Do you need hosting & deployment support?</label>
           </div>
 
           {/* Additional Notes */}
           <div>
-            <label className="block mb-2 font-medium text-gray-700">Additional Notes</label>
+            <label className="block mb-2 font-medium text-cyan-200">Additional Notes</label>
             <textarea
               name="extraNotes"
               value={formData.extraNotes}
               onChange={handleChange}
               rows={3}
-              className="w-full p-3 rounded-lg border border-gray-300 bg-white text-gray-800 focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:ring-2 focus:ring-cyan-400"
               placeholder="Anything else we should know?"
             />
           </div>
@@ -313,7 +311,7 @@ export default function Questionnaire() {
           <button
             type="submit"
             disabled={status === "submitting"}
-            className="w-full py-3 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-800 font-semibold shadow transition disabled:opacity-50"
+            className="w-full py-3 rounded-lg neon-btn font-semibold transition disabled:opacity-50"
           >
             {status === "submitting" ? "Submitting..." : "Submit Questionnaire"}
           </button>
@@ -321,14 +319,41 @@ export default function Questionnaire() {
 
         {message && (
           <p
-            className={`mt-4 font-semibold text-center ${
-              status === "submitted" ? "text-green-600" : status === "error" ? "text-red-600" : "text-gray-700"
+            className={`mt-6 font-semibold text-center ${
+              status === "submitted" ? "text-green-400" : status === "error" ? "text-red-400" : "text-gray-200"
             }`}
           >
             {message}
           </p>
         )}
+
+        {/* Back Button */}
+        <div className="mt-8 text-center">
+          <Link href="/dashboard">
+            <button className="px-6 py-2 neon-btn rounded-lg font-semibold transition">
+              ⬅ Back to Dashboard
+            </button>
+          </Link>
+        </div>
       </motion.div>
+
+      {/* Extra Styling */}
+      <style jsx>{`
+        .neon-btn {
+          background: transparent;
+          border: 2px solid #22d3ee;
+          box-shadow: 0 0 10px #22d3ee, 0 0 20px #0891b2;
+          color: #fff;
+        }
+        .neon-btn:hover {
+          box-shadow: 0 0 20px #a855f7, 0 0 40px #22d3ee;
+          border-color: #a855f7;
+        }
+        select option {
+          background: #1f2937; /* Dark gray background */
+          color: #fff; /* White text */
+        }
+      `}</style>
     </div>
   );
 }

@@ -30,7 +30,6 @@ export default function ChatPage() {
   const [file, setFile] = useState<File | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // --- Helpers ---
   const parseDateSafe = (s: string) => {
     const d = new Date(s);
     return isNaN(d.getTime()) ? new Date() : d;
@@ -48,7 +47,6 @@ export default function ChatPage() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  // --- Fetch messages ---
   const fetchMessages = async () => {
     try {
       const res = await fetch("/api/messages");
@@ -90,7 +88,6 @@ export default function ChatPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // --- Send message ---
   const sendMessage = async () => {
     if (!newMsg.trim() && !file) return;
     if (!session?.user?.id) {
@@ -132,13 +129,12 @@ export default function ChatPage() {
 
       setNewMsg("");
       setFile(null);
-      fetchMessages(); // refresh from server
+      fetchMessages();
     } catch (err) {
       console.error("Error sending message:", err);
     }
   };
 
-  // --- Require login ---
   if (status === "loading") {
     return <div className="p-6">Loading...</div>;
   }
@@ -155,7 +151,6 @@ export default function ChatPage() {
     );
   }
 
-  // --- UI ---
   return (
     <div className="chat-container">
       <div className="chat-header">Chat with Admin</div>
@@ -208,8 +203,7 @@ export default function ChatPage() {
         .chat-container {
           display: flex;
           flex-direction: column;
-          height: 100vh;
-          width: 100%;
+          min-height: 100vh;
           background-color: #ece5dd;
         }
         .chat-header {
@@ -218,6 +212,7 @@ export default function ChatPage() {
           color: #fff;
           font-weight: bold;
           font-size: 18px;
+          flex-shrink: 0;
         }
         .chat-messages {
           flex: 1;
@@ -225,7 +220,6 @@ export default function ChatPage() {
           overflow-y: auto;
           display: flex;
           flex-direction: column;
-          padding-bottom: 100px;
         }
         .message-row {
           display: flex;
@@ -275,14 +269,12 @@ export default function ChatPage() {
           text-decoration: underline;
         }
         .chat-input {
-          position: fixed;
-          bottom: 0;
-          left: 0;
-          width: 100%;
+          flex-shrink: 0;
           display: flex;
           padding: 10px;
           background-color: #f0f0f0;
           align-items: center;
+          padding-bottom: env(safe-area-inset-bottom);
         }
         .chat-input input[type="text"] {
           flex: 1;

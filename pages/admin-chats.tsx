@@ -32,7 +32,8 @@ export default function AdminChats() {
         const res = await fetch("/api/users");
         if (res.ok) {
           const data = await res.json();
-          setUsers(data);
+          // Ensure all users start with unread = 0
+          setUsers(data.map((u: User) => ({ ...u, unread: u.unread || 0 })));
         }
       } catch (err) {
         console.error("Failed to load users", err);
@@ -45,9 +46,12 @@ export default function AdminChats() {
   const selectUser = async (user: User) => {
     setSelectedUser(user);
     setSidebarOpen(false);
+
+    // Reset unread count when user is selected
     setUsers((prev) =>
       prev.map((u) => (u.id === user.id ? { ...u, unread: 0 } : u))
     );
+
     await loadMessages(user.id);
   };
 
@@ -55,7 +59,14 @@ export default function AdminChats() {
     try {
       const res = await fetch(`/api/messages?userId=${userId}`);
       if (res.ok) {
-        const data = await res.json();
+        const data: Message[] = await res.json();
+
+        // Sort by createdAt ascending
+        data.sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+
         setMessages(data);
         scrollToBottom();
       }
@@ -67,11 +78,43 @@ export default function AdminChats() {
   // Poll messages every 5 seconds
   useEffect(() => {
     if (!selectedUser) return;
-    const interval = setInterval(() => {
-      loadMessages(selectedUser.id);
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/messages?userId=${selectedUser.id}`);
+        if (res.ok) {
+          const data: Message[] = await res.json();
+
+          // Sort messages
+          data.sort(
+            (a, b) =>
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+
+          // Detect new unread messages (only if chat not open)
+          setUsers((prev) =>
+            prev.map((u) => {
+              if (u.id === selectedUser.id) return u; // active chat → don't increase unread
+              const prevCount = messages.filter(
+                (m) => m.senderId === u.id && m.senderType === "USER"
+              ).length;
+              const newCount = data.filter(
+                (m) => m.senderId === u.id && m.senderType === "USER"
+              ).length;
+              return { ...u, unread: Math.max(0, (u.unread || 0) + (newCount - prevCount)) };
+            })
+          );
+
+          setMessages(data);
+          scrollToBottom();
+        }
+      } catch (err) {
+        console.error("Polling failed", err);
+      }
     }, 5000);
+
     return () => clearInterval(interval);
-  }, [selectedUser]);
+  }, [selectedUser, messages]);
 
   // Send a message
   const sendMessage = async () => {
@@ -169,7 +212,7 @@ export default function AdminChats() {
         )}
       </div>
 
-      {/* Styles */}
+      {/* Styles (unchanged from yours, kept WhatsApp-like) */}
       <style jsx>{`
         .admin-chat-container {
           display: flex;
