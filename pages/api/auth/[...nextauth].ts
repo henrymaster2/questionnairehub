@@ -4,7 +4,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import type { JWT } from "next-auth/jwt";
-import type { Session, User } from "next-auth";
+import type { User } from "next-auth";
 
 const prisma = new PrismaClient();
 
@@ -48,7 +48,7 @@ export const authOptions: NextAuthOptions = {
 
         if (identifier === adminEmail && password === adminPassword) {
           return {
-            id: adminId.toString(), // NextAuth expects string
+            id: adminId.toString(),
             name: "Admin",
             email: adminEmail,
             isAdmin: true,
@@ -85,16 +85,20 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.id = parseInt((user as any).id, 10);
-        token.isAdmin = (user as any).isAdmin ?? false;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const u = user as any;
+      if (u) {
+        token.id = parseInt(u.id, 10);
+        token.isAdmin = u.isAdmin ?? false;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id;
-        session.user.isAdmin = token.isAdmin;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).id = token.id;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (session.user as any).isAdmin = token.isAdmin;
       }
       return session;
     },
