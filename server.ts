@@ -1,51 +1,79 @@
-import { createServer } from "http";
-import { Server } from "socket.io";
+// server.ts
+import http from "http";
+import { parse } from "url";
+import next from "next";
+import { Server as IOServer } from "socket.io";
 import { PrismaClient } from "@prisma/client";
 
+const dev = process.env.NODE_ENV !== "production";
+const app = next({ dev });
+const handle = app.getRequestHandler();
 const prisma = new PrismaClient();
-const httpServer = createServer();
-const io = new Server(httpServer, {
-  cors: { origin: "*" },
-});
 
-type Message = {
-  senderId: number;
-  receiverId: number;
-  content: string;
-};
-
-const onlineUsers = new Map<number, string>();
-
-io.on("connection", (socket) => {
-  console.log("New client connected:", socket.id);
-
-  socket.on("join", (userId: number) => {
-    console.log(`User ${userId} joined`);
-    onlineUsers.set(userId, socket.id);
+app.prepare().then(() => {
+  const server = http.createServer((req, res) => {
+    const parsedUrl = parse(req.url || "", true);
+    handle(req, res, parsedUrl);
   });
 
-  socket.on("send_message", async (msg: Message) => {
-    const { senderId, receiverId, content } = msg;
+  const io = new IOServer(server, {
+    cors: {
+      origin: process.env.FRONTEND_ORIGIN || "*",
+      methods: ["GET", "POST"],
+    },
+  });
 
-    const savedMsg = await prisma.message.create({
-      data: { senderId, receiverId, content },
+  io.on("connection", (socket) => {
+    console.log("Socket connected:", socket.id);
+
+    // Join room for a user (optional)
+    socket.on("join", (roomId: string | number) => {
+      socket.join(String(roomId));
     });
 
-    // Emit to receiver and sender
-    const receiverSocketId = onlineUsers.get(receiverId);
-    if (receiverSocketId) io.to(receiverSocketId).emit("receive_message", savedMsg);
+    // Listen for 'send-message' event with payload { senderId, receiverId, content, senderType? }
+    socket.on(
+      "send-message",
+      async (payload: {
+        senderId: number;
+        receiverId: number;
+        content: string;
+        senderType?: "USER" | "ADMIN" | string;
+      }) => {
+        try {
+          const { senderId, receiverId, content } = payload;
+          const senderType = payload.senderType ?? "USER";
 
-    const senderSocketId = onlineUsers.get(senderId);
-    if (senderSocketId) io.to(senderSocketId).emit("receive_message", savedMsg);
+          // Ensure required fields are present
+          if (!senderId || !receiverId || !content) {
+            socket.emit("error", { message: "Missing message fields" });
+            return;
+          }
+
+          // Create message in DB — include senderType as required by Prisma schema
+          const savedMsg = await prisma.message.create({
+            data: {
+              senderId,
+              receiverId,
+              content,
+              senderType, // must match your Prisma enum or string field
+            },
+          });
+
+          // Emit to both sender and receiver rooms (or their sockets)
+          io.to(String(receiverId)).emit("new-message", savedMsg);
+          io.to(String(senderId)).emit("new-message", savedMsg);
+        } catch (err) {
+          console.error("socket send-message error:", err);
+          socket.emit("error", { message: "Message send failed" });
+        }
+      }
+    );
   });
 
-  socket.on("disconnect", () => {
-    for (const [userId, sId] of onlineUsers.entries()) {
-      if (sId === socket.id) onlineUsers.delete(userId);
-    }
+  const port = Number(process.env.PORT || 3000);
+  server.listen(port, () => {
+    console.log(`> Ready on http://localhost:${port}`);
   });
 });
-
-httpServer.listen(3001, () => {
-  console.log("Socket.IO server running on port 3001");
-});
+  

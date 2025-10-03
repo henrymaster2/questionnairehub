@@ -4,11 +4,11 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import type { JWT } from "next-auth/jwt";
-import type { User } from "next-auth";
+import type { User, Session } from "next-auth";
 
 const prisma = new PrismaClient();
 
-// --- Extend NextAuth types ---
+// --- Extend NextAuth types locally for this file only ---
 declare module "next-auth" {
   interface Session {
     user: {
@@ -41,21 +41,21 @@ export const authOptions: NextAuthOptions = {
         if (!credentials) return null;
         const { identifier, password } = credentials;
 
-        // --- 1) ENV-based Admin login ---
+        // ENV-based admin login
         const adminEmail = process.env.ADMIN_EMAIL;
         const adminPassword = process.env.ADMIN_PASSWORD;
         const adminId = Number(process.env.ADMIN_ID ?? -1);
 
         if (identifier === adminEmail && password === adminPassword) {
           return {
-            id: adminId.toString(),
+            id: adminId.toString(), // NextAuth expects string
             name: "Admin",
             email: adminEmail,
             isAdmin: true,
-          };
+          } as unknown as User;
         }
 
-        // --- 2) Normal User login (Prisma) ---
+        // Normal user login via Prisma
         const user = await prisma.user.findFirst({
           where: {
             OR: [
@@ -74,9 +74,9 @@ export const authOptions: NextAuthOptions = {
           id: user.id.toString(),
           name: user.name,
           email: user.email,
-          phone: user.phone,
+          // include any extra fields you want (phone, isAdmin false)
           isAdmin: false,
-        };
+        } as unknown as User;
       },
     }),
   ],
@@ -84,21 +84,21 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const u = user as any;
-      if (u) {
-        token.id = parseInt(u.id, 10);
-        token.isAdmin = u.isAdmin ?? false;
+    // `user` here is the object returned by `authorize` or created by the adapter
+    async jwt({ token, user }: { token: JWT; user?: any }) {
+      // small runtime cast since NextAuth's User type doesn't include our custom isAdmin
+      if (user) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        token.id = parseInt((user as any).id, 10);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        token.isAdmin = (user as any).isAdmin ?? false;
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: Session; token: JWT }) {
       if (session.user) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session.user as any).id = token.id;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (session.user as any).isAdmin = token.isAdmin;
+        session.user.id = token.id as number;
+        session.user.isAdmin = token.isAdmin as boolean;
       }
       return session;
     },

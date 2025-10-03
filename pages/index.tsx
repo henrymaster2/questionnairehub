@@ -1,7 +1,7 @@
 /* pages/index.tsx */
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
-import Link from "next/link"; // ✅ Added Link import
+import Link from "next/link"; // corrected import
 import {
   PencilSquareIcon,
   ChartBarIcon,
@@ -47,7 +47,6 @@ export default function Home() {
   const [showCursor, setShowCursor] = useState(true);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Typing animation for site title
   useEffect(() => {
     const text = "QQuestionnaire Hub";
     let i = 0;
@@ -66,7 +65,6 @@ export default function Home() {
     return () => clearInterval(typingInterval);
   }, []);
 
-  // Auto-change sections
   useEffect(() => {
     startProgress();
     return () => {
