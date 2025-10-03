@@ -9,12 +9,12 @@ const prisma = new PrismaClient();
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const session = await getServerSession(req, res, authOptions);
-    if (!session || !(session.user as any).id) {
+    if (!session || !session.user?.id) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    const userId = (session.user as any).id;
-    const isAdmin = (session.user as any).isAdmin;
+    const userId: number = session.user.id;
+    const isAdmin: boolean = session.user.isAdmin;
 
     let questionnaires;
 
@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     } else {
       // Regular user: fetch only their questionnaires
       questionnaires = await prisma.questionnaire.findMany({
-        where: { userId: Number(userId) },
+        where: { userId },
         orderBy: { createdAt: "desc" },
       });
     }
@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       id: q.id,
       name: q.name,
       email: q.email,
-      phone: q.userId ? q.userId.toString() : "", // optional, can include phone from user join if needed
+      phone: q.userId ? q.userId.toString() : "",
       projectType: q.projectType,
       description: q.description,
       preferredTech: q.preferredTech,

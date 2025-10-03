@@ -1,6 +1,7 @@
 /* pages/index.tsx */
 import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link"; // ✅ Added Link import
 import {
   PencilSquareIcon,
   ChartBarIcon,
@@ -32,26 +33,10 @@ const sections = [
 ];
 
 const exclusiveIdeas = [
-  {
-    title: "Create Meaningful Questions",
-    desc: "Build custom questionnaires that spark real engagement and help uncover valuable insights.",
-    icon: PencilSquareIcon,
-  },
-  {
-    title: "Gain Real Insights",
-    desc: "Analyze responses and discover patterns that can guide better decisions and deeper understanding.",
-    icon: ChartBarIcon,
-  },
-  {
-    title: "Share Knowledge",
-    desc: "Spread ideas that matter. Inspire others and let your thoughts reach a wider audience.",
-    icon: ShareIcon,
-  },
-  {
-    title: "Grow Connections",
-    desc: "Collaborate with others who think like you and expand your circle of meaningful relationships.",
-    icon: UsersIcon,
-  },
+  { title: "Create Meaningful Questions", desc: "Build custom questionnaires that spark real engagement and help uncover valuable insights.", icon: PencilSquareIcon },
+  { title: "Gain Real Insights", desc: "Analyze responses and discover patterns that can guide better decisions and deeper understanding.", icon: ChartBarIcon },
+  { title: "Share Knowledge", desc: "Spread ideas that matter. Inspire others and let your thoughts reach a wider audience.", icon: ShareIcon },
+  { title: "Grow Connections", desc: "Collaborate with others who think like you and expand your circle of meaningful relationships.", icon: UsersIcon },
 ];
 
 export default function Home() {
@@ -120,18 +105,12 @@ export default function Home() {
           {showCursor && <span className="cursor">|</span>}
         </h1>
         <nav className="flex gap-2 sm:gap-4">
-          <a
-            href="/login"
-            className="px-4 sm:px-5 py-2 rounded-full font-semibold text-white neon-btn text-sm sm:text-base"
-          >
+          <Link href="/login" className="px-4 sm:px-5 py-2 rounded-full font-semibold text-white neon-btn text-sm sm:text-base">
             Log In
-          </a>
-          <a
-            href="/signup"
-            className="px-4 sm:px-5 py-2 rounded-full font-semibold text-white neon-btn text-sm sm:text-base"
-          >
+          </Link>
+          <Link href="/signup" className="px-4 sm:px-5 py-2 rounded-full font-semibold text-white neon-btn text-sm sm:text-base">
             Sign Up
-          </a>
+          </Link>
         </nav>
       </header>
 
