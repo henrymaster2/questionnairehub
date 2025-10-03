@@ -1,9 +1,10 @@
 // pages/api/auth/[...nextauth].ts
-import NextAuth, { NextAuthOptions, DefaultSession } from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { JWT } from "next-auth/jwt";
+import type { JWT } from "next-auth/jwt";
+import type { Session, User } from "next-auth";
 
 const prisma = new PrismaClient();
 
@@ -13,7 +14,7 @@ declare module "next-auth" {
     user: {
       id: number;
       isAdmin: boolean;
-    } & DefaultSession["user"];
+    } & Omit<User, "id">;
   }
 }
 
@@ -83,16 +84,18 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: any }) {
+    async jwt({ token, user }) {
       if (user) {
-        token.id = parseInt(user.id, 10);
-        token.isAdmin = user.isAdmin;
+        token.id = parseInt((user as any).id, 10);
+        token.isAdmin = (user as any).isAdmin ?? false;
       }
       return token;
     },
-    async session({ session, token }: { session: any; token: JWT }) {
-      session.user.id = token.id;
-      session.user.isAdmin = token.isAdmin;
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id;
+        session.user.isAdmin = token.isAdmin;
+      }
       return session;
     },
   },
