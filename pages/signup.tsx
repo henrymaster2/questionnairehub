@@ -3,7 +3,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { useRouter } from "next/router";
-import { Eye, EyeOff } from "lucide-react"; // eye icons
+import { Eye, EyeOff } from "lucide-react";
 
 export default function Signup() {
   const router = useRouter();
@@ -28,7 +28,6 @@ export default function Signup() {
   };
 
   const validatePassword = (password: string) => {
-    // strong password: min 8 chars, at least 1 uppercase, 1 lowercase, 1 number, 1 special char
     const strongRegex =
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
     if (!strongRegex.test(password)) {
@@ -57,9 +56,7 @@ export default function Signup() {
 
       if (res.ok) {
         setSuccess(true);
-        setTimeout(() => {
-          router.push("/login");
-        }, 2000);
+        setTimeout(() => router.push("/login"), 2000);
       } else {
         const data = await res.json();
         alert(`Signup failed: ${data.message}`);
@@ -109,16 +106,20 @@ export default function Signup() {
           </p>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Name */}
+            {/* Full Name */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-200">
+              <label
+                htmlFor="name"
+                className="block text-sm font-medium mb-2 text-gray-200"
+              >
                 Full Name
               </label>
               <input
+                id="name"
                 type="text"
                 name="name"
-                onChange={handleChange}
                 value={formData.name}
+                onChange={handleChange}
                 placeholder="Enter your name"
                 className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 outline-none"
                 required
@@ -127,14 +128,18 @@ export default function Signup() {
 
             {/* Email */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-200">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium mb-2 text-gray-200"
+              >
                 Email Address
               </label>
               <input
+                id="email"
                 type="email"
                 name="email"
-                onChange={handleChange}
                 value={formData.email}
+                onChange={handleChange}
                 placeholder="Enter your email"
                 className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 outline-none"
                 required
@@ -143,7 +148,10 @@ export default function Signup() {
 
             {/* Phone */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-200">
+              <label
+                htmlFor="phone"
+                className="block text-sm font-medium mb-2 text-gray-200"
+              >
                 Phone Number
               </label>
               <div className="flex">
@@ -159,10 +167,11 @@ export default function Signup() {
                   <option value="+91">🇮🇳 +91</option>
                 </select>
                 <input
+                  id="phone"
                   type="tel"
                   name="phone"
-                  onChange={handleChange}
                   value={formData.phone}
+                  onChange={handleChange}
                   placeholder="712345678"
                   pattern="[0-9]{7,15}"
                   className="w-full px-4 py-3 rounded-r-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 outline-none"
@@ -170,27 +179,32 @@ export default function Signup() {
                 />
               </div>
               <p className="text-xs text-gray-300 mt-1">
-                Enter your number without country code (e.g. 712345678).
+                Enter your number without country code (e.g. 712345678)
               </p>
             </div>
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-200">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium mb-2 text-gray-200"
+              >
                 Password
               </label>
               <div className="relative">
                 <input
+                  id="password"
                   type={showPassword ? "text" : "password"}
                   name="password"
-                  onChange={handleChange}
                   value={formData.password}
+                  onChange={handleChange}
                   placeholder="Enter your password"
-                  className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 outline-none pr-10"
+                  className="w-full px-4 py-3 pr-10 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400 outline-none"
                   required
                 />
                 <button
                   type="button"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-3 text-gray-400 hover:text-cyan-300"
                 >
@@ -222,7 +236,7 @@ export default function Signup() {
         )}
       </motion.section>
 
-      {/* Extra Styling */}
+     
       <style jsx>{`
         .neon-btn {
           background: transparent;

@@ -1,18 +1,17 @@
 // pages/api/questionnaires/submit.ts
 import type { NextApiRequest, NextApiResponse } from "next";
-import { getServerSession } from "next-auth/next";
+import prisma from "@/lib/prisma";
+import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
+    if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
 
   try {
-    // --- 1) Get logged-in user from session ---
+    
     const session = await getServerSession(req, res, authOptions);
     if (!session?.user?.id) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -23,8 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: "Invalid user ID in session" });
     }
 
-    // --- 2) Extract fields from request body ---
-    const {
+        const {
       name,
       email,
       projectType,
@@ -38,20 +36,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       additionalInfo = null,
     } = req.body;
 
-    // --- 3) Validate required fields ---
-    const missing: string[] = [];
-    if (!name) missing.push("name");
-    if (!email) missing.push("email");
-    if (!projectType) missing.push("projectType");
-    if (!description) missing.push("description");
-    if (!budget) missing.push("budget");
-    if (!timeline) missing.push("timeline");
+        const missingFields: string[] = [];
+    if (!name) missingFields.push("name");
+    if (!email) missingFields.push("email");
+    if (!projectType) missingFields.push("projectType");
+    if (!description) missingFields.push("description");
+    if (!budget) missingFields.push("budget");
+    if (!timeline) missingFields.push("timeline");
 
-    if (missing.length > 0) {
-      return res.status(400).json({ message: `Missing required fields: ${missing.join(", ")}` });
+    if (missingFields.length > 0) {
+      return res.status(400).json({
+        message: `Missing required fields: ${missingFields.join(", ")}`,
+      });
     }
 
-    // --- 4) Create questionnaire linked to the current user ---
+    
     const questionnaire = await prisma.questionnaire.create({
       data: {
         userId,
@@ -69,14 +68,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
+    
     return res.status(201).json({
       message: "Questionnaire submitted successfully",
       questionnaire,
     });
   } catch (error) {
-    console.error("Error submitting questionnaire:", error);
+    console.error("❌ Error submitting questionnaire:", error);
     return res.status(500).json({ message: "Internal server error" });
-  } finally {
-    await prisma.$disconnect();
   }
 }

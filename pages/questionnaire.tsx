@@ -27,7 +27,9 @@ export default function Questionnaire() {
     extraNotes: "",
   });
 
-  const [status, setStatus] = useState<"idle" | "submitting" | "submitted" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "submitting" | "submitted" | "error"
+  >("idle");
   const [message, setMessage] = useState<string>("");
 
   useEffect(() => {
@@ -56,7 +58,9 @@ export default function Questionnaire() {
   }, []);
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
   ) => {
     const { name, type, value } = e.target;
     if (type === "checkbox") {
@@ -150,7 +154,7 @@ export default function Questionnaire() {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:ring-2 focus:ring-cyan-400"
+              className="w-full p-3 rounded-lg border border-white/20 bg-gray-900/40 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400"
               placeholder="Your full name"
               required
             />
@@ -164,7 +168,7 @@ export default function Questionnaire() {
               name="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full p-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:ring-2 focus:ring-cyan-400"
+              className="w-full p-3 rounded-lg border border-white/20 bg-gray-900/40 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400"
               placeholder="you@example.com"
               required
             />
@@ -172,7 +176,9 @@ export default function Questionnaire() {
 
           {/* Project Type */}
           <div>
-            <label className="block mb-2 font-medium text-cyan-200">Type of Software Needed</label>
+            <label className="block mb-2 font-medium text-cyan-200">
+              Type of Software Needed
+            </label>
             <select
               name="projectType"
               value={formData.projectType}
@@ -192,13 +198,15 @@ export default function Questionnaire() {
 
           {/* Description */}
           <div>
-            <label className="block mb-2 font-medium text-cyan-200">Project Description</label>
+            <label className="block mb-2 font-medium text-cyan-200">
+              Project Description
+            </label>
             <textarea
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows={4}
-              className="w-full p-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:ring-2 focus:ring-cyan-400"
+              className="w-full p-3 rounded-lg border border-white/20 bg-gray-900/40 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400"
               placeholder="Briefly describe your project..."
               required
             />
@@ -206,20 +214,24 @@ export default function Questionnaire() {
 
           {/* Preferred Technologies */}
           <div>
-            <label className="block mb-2 font-medium text-cyan-200">Preferred Technologies (optional)</label>
+            <label className="block mb-2 font-medium text-cyan-200">
+              Preferred Technologies (optional)
+            </label>
             <input
               type="text"
               name="technologies"
               value={formData.technologies}
               onChange={handleChange}
               placeholder="e.g. React, Node.js, PostgreSQL, Flutter"
-              className="w-full p-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:ring-2 focus:ring-cyan-400"
+              className="w-full p-3 rounded-lg border border-white/20 bg-gray-900/40 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400"
             />
           </div>
 
           {/* Budget */}
           <div>
-            <label className="block mb-2 font-medium text-cyan-200">Budget Range (KSH)</label>
+            <label className="block mb-2 font-medium text-cyan-200">
+              Budget Range (KSH)
+            </label>
             <select
               name="budget"
               value={formData.budget}
@@ -238,7 +250,9 @@ export default function Questionnaire() {
 
           {/* Timeline */}
           <div>
-            <label className="block mb-2 font-medium text-cyan-200">Timeline</label>
+            <label className="block mb-2 font-medium text-cyan-200">
+              Timeline
+            </label>
             <select
               name="timeline"
               value={formData.timeline}
@@ -256,7 +270,9 @@ export default function Questionnaire() {
 
           {/* Preferred Communication */}
           <div>
-            <label className="block mb-2 font-medium text-cyan-200">Preferred Communication</label>
+            <label className="block mb-2 font-medium text-cyan-200">
+              Preferred Communication
+            </label>
             <select
               name="preferredCommunication"
               value={formData.preferredCommunication}
@@ -280,7 +296,9 @@ export default function Questionnaire() {
               onChange={handleChange}
               className="h-4 w-4 text-cyan-400 bg-black/40 border-white/30"
             />
-            <label className="text-gray-200">Do you require backend functionality?</label>
+            <label className="text-gray-200">
+              Do you require backend functionality?
+            </label>
           </div>
 
           <div className="flex items-center gap-2">
@@ -291,18 +309,22 @@ export default function Questionnaire() {
               onChange={handleChange}
               className="h-4 w-4 text-cyan-400 bg-black/40 border-white/30"
             />
-            <label className="text-gray-200">Do you need hosting & deployment support?</label>
+            <label className="text-gray-200">
+              Do you need hosting & deployment support?
+            </label>
           </div>
 
           {/* Additional Notes */}
           <div>
-            <label className="block mb-2 font-medium text-cyan-200">Additional Notes</label>
+            <label className="block mb-2 font-medium text-cyan-200">
+              Additional Notes
+            </label>
             <textarea
               name="extraNotes"
               value={formData.extraNotes}
               onChange={handleChange}
               rows={3}
-              className="w-full p-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-300 focus:ring-2 focus:ring-cyan-400"
+              className="w-full p-3 rounded-lg border border-white/20 bg-gray-900/40 text-white placeholder-gray-400 focus:ring-2 focus:ring-cyan-400"
               placeholder="Anything else we should know?"
             />
           </div>
@@ -313,14 +335,20 @@ export default function Questionnaire() {
             disabled={status === "submitting"}
             className="w-full py-3 rounded-lg neon-btn font-semibold transition disabled:opacity-50"
           >
-            {status === "submitting" ? "Submitting..." : "Submit Questionnaire"}
+            {status === "submitting"
+              ? "Submitting..."
+              : "Submit Questionnaire"}
           </button>
         </form>
 
         {message && (
           <p
             className={`mt-6 font-semibold text-center ${
-              status === "submitted" ? "text-green-400" : status === "error" ? "text-red-400" : "text-gray-200"
+              status === "submitted"
+                ? "text-green-400"
+                : status === "error"
+                ? "text-red-400"
+                : "text-gray-200"
             }`}
           >
             {message}
@@ -337,7 +365,7 @@ export default function Questionnaire() {
         </div>
       </motion.div>
 
-      {/* Extra Styling */}
+      {/* Styles */}
       <style jsx>{`
         .neon-btn {
           background: transparent;
@@ -350,8 +378,8 @@ export default function Questionnaire() {
           border-color: #a855f7;
         }
         select option {
-          background: #1f2937; /* Dark gray background */
-          color: #fff; /* White text */
+          background: #111827;
+          color: #fff;
         }
       `}</style>
     </div>

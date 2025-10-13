@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import jsPDF from "jspdf";
 import { useRouter } from "next/router";
+import { useSession, signOut } from "next-auth/react";
 
 type Questionnaire = {
   id: number;
@@ -26,11 +27,19 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const router = useRouter();
+  const { data: session, status } = useSession();
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/login");
+    }
+  }, [status, router]);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const res = await fetch("/api/questionnaires/user", {
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "";
+        const res = await fetch(`${baseUrl}/api/questionnaires/user`, {
           credentials: "include",
         });
         if (!res.ok) throw new Error("Failed to fetch questionnaires");
@@ -45,21 +54,14 @@ export default function AdminDashboard() {
     fetchData();
   }, []);
 
-  // ✅ Logout function
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
-      });
+      await signOut({ callbackUrl: "/login" });
     } catch (err) {
       console.error("Logout failed:", err);
-    } finally {
-      router.push("/login");
     }
   };
 
-  // ✅ PDF generation
   const handleDownloadPDF = (q: Questionnaire) => {
     const doc = new jsPDF();
     doc.setFont("Helvetica", "bold");
@@ -129,7 +131,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-indigo-900 via-teal-800 to-cyan-700 text-white relative">
-      {/* Sidebar (desktop) */}
       <motion.aside
         initial={{ x: -250, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
@@ -153,7 +154,6 @@ export default function AdminDashboard() {
         </nav>
       </motion.aside>
 
-      {/* Mobile Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.aside
@@ -188,7 +188,6 @@ export default function AdminDashboard() {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
       <div className="flex-1 px-6 py-10 w-full">
         <motion.header
           initial={{ y: -50, opacity: 0 }}
@@ -202,7 +201,6 @@ export default function AdminDashboard() {
           >
             ☰ Menu
           </button>
-
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-wide text-white drop-shadow-lg">
             Admin Dashboard
           </h1>

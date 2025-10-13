@@ -8,11 +8,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const session = await getServerSession(req, res, authOptions);
   if (!session || !session.user?.email) return res.status(401).json({ error: "Not authenticated" });
 
-  // check admin
+  
   const me = await prisma.user.findUnique({ where: { email: session.user.email } });
   if (!me || me.role !== "ADMIN") return res.status(403).json({ error: "Forbidden" });
 
-  // fetch users (excluding admins)
+
   const users = await prisma.user.findMany({
     where: { role: "USER" },
     select: {
@@ -22,7 +22,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       phone: true,
       profilePic: true,
       createdAt: true,
-      // last message time
+      
       sentMessages: { orderBy: { createdAt: "desc" }, take: 1, select: { createdAt: true } },
     },
     orderBy: { createdAt: "desc" },

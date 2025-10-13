@@ -2,7 +2,9 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/router"; // ✅ keep this if you're using Pages Router
+// If you're on Next.js 13 App Router, replace above line with:
+// import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { Eye, EyeOff } from "lucide-react"; // 👁️ icons
 
@@ -120,6 +122,7 @@ export default function Login() {
               />
               <button
                 type="button"
+                aria-label={showPassword ? "Hide password" : "Show password"}
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-3 text-gray-400 hover:text-cyan-300"
               >
@@ -183,7 +186,7 @@ export default function Login() {
         }
 
         .loader {
-          --path: white;
+          --path: #22d3ee; /* improved contrast */
           --dot: #f40af0;
           --duration: 2.5s;
           width: 20px;

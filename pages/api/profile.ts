@@ -6,15 +6,12 @@ import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
-    // Disable caching to prevent 304 responses
+    // Disable caching to prevent old responses
     res.setHeader("Cache-Control", "no-store");
 
-    // Get session from NextAuth
+    // ✅ Get session from NextAuth
     const session = await getServerSession(req, res, authOptions);
 
     if (!session || !session.user?.email) {
@@ -23,52 +20,57 @@ export default async function handler(
 
     const userEmail = session.user.email;
 
-    // -------------------- GET: Fetch profile --------------------
-    if (req.method === "GET") {
-      const user = await prisma.user.findUnique({
-        where: { email: userEmail },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          countryCode: true,
-          profilePic: true,
-          createdAt: true,
-        },
-      });
+    switch (req.method) {
+      // -------------------- GET: Fetch profile --------------------
+      case "GET": {
+        const user = await prisma.user.findUnique({
+          where: { email: userEmail },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            countryCode: true,
+            profilePic: true,
+            createdAt: true,
+          },
+        });
 
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
+        if (!user) {
+          return res.status(404).json({ message: "User not found" });
+        }
+
+        return res.status(200).json({ user });
       }
 
-      return res.status(200).json({ user });
-    }
+      // -------------------- PUT: Update profile --------------------
+      case "PUT": {
+        const { name, phone, countryCode, profilePic } = req.body;
 
-    // -------------------- PUT: Update profile --------------------
-    if (req.method === "PUT") {
-      const { name, phone, countryCode, profilePic } = req.body;
+        if (!name && !phone && !countryCode && !profilePic) {
+          return res.status(400).json({ message: "No fields to update" });
+        }
 
-      if (!name && !phone && !countryCode && !profilePic) {
-        return res.status(400).json({ message: "No fields to update" });
+        const updatedUser = await prisma.user.update({
+          where: { email: userEmail },
+          data: {
+            ...(name && { name }),
+            ...(phone && { phone }),
+            ...(countryCode && { countryCode }),
+            ...(profilePic && { profilePic }),
+          },
+        });
+
+        return res.status(200).json({ user: updatedUser });
       }
 
-      const updatedUser = await prisma.user.update({
-        where: { email: userEmail },
-        data: {
-          ...(name && { name }),
-          ...(phone && { phone }),
-          ...(countryCode && { countryCode }),
-          ...(profilePic && { profilePic }),
-        },
-      });
-
-      return res.status(200).json({ user: updatedUser });
+      default:
+        return res.status(405).json({ message: "Method not allowed" });
     }
-
-    return res.status(405).json({ message: "Method not allowed" });
   } catch (error) {
     console.error("Error in /api/profile:", error);
     return res.status(500).json({ message: "Internal server error" });
+  } finally {
+    await prisma.$disconnect();
   }
 }

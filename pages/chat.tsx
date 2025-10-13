@@ -50,9 +50,8 @@ export default function ChatPage() {
   const fetchMessages = async () => {
     try {
       const res = await fetch("/api/messages");
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) return;
       const data: RawMessageFromServer[] = await res.json();
-
       const normalized = data
         .map((m) => {
           const created = parseDateSafe(m.createdAt);
@@ -74,7 +73,6 @@ export default function ChatPage() {
           (a, b) =>
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
-
       setMessages(normalized);
       scrollToBottom();
     } catch (err) {
@@ -112,7 +110,6 @@ export default function ChatPage() {
         type = uploaded.type;
       } else {
         content = newMsg.trim();
-        type = "text";
       }
 
       const res = await fetch("/api/messages", {
@@ -126,7 +123,6 @@ export default function ChatPage() {
       });
 
       if (!res.ok) throw new Error(await res.text());
-
       setNewMsg("");
       setFile(null);
       fetchMessages();
@@ -138,6 +134,7 @@ export default function ChatPage() {
   if (status === "loading") {
     return <div className="p-6">Loading...</div>;
   }
+
   if (!session) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -165,7 +162,7 @@ export default function ChatPage() {
                 {m.type === "image" ? (
                   <img src={m.content} alt="uploaded" className="message-image" />
                 ) : m.type === "file" ? (
-                  <a href={m.content} target="_blank" className="file-link">
+                  <a href={m.content} target="_blank" className="file-link" rel="noreferrer">
                     📎 Download File
                   </a>
                 ) : (

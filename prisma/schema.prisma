@@ -9,31 +9,31 @@ generator client {
 
 // -------- User --------
 model User {
-  id             Int                  @id @default(autoincrement())
-  name           String
-  email          String               @unique
-  countryCode    String
-  phone          String               @unique
-  password       String
-  profilePic     String?
-  role           Role                 @default(USER) // USER or ADMIN
-  createdAt      DateTime             @default(now())
+  id          Int      @id @default(autoincrement())
+  name        String
+  email       String   @unique
+  countryCode String
+  phone       String   @unique
+  password    String
+  profilePic  String?
+  role        Role     @default(USER) // USER or ADMIN
+  createdAt   DateTime @default(now())
 
   questionnaires   Questionnaire[]
-  sentMessages     Message[]          @relation("SentMessages")
-  receivedMessages Message[]          @relation("ReceivedMessages")
+  sentMessages     Message[]            @relation("SentMessages")
+  receivedMessages Message[]            @relation("ReceivedMessages")
   resetTokens      PasswordResetToken[]
 }
 
 // -------- Questionnaire --------
 model Questionnaire {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
+  id     Int  @id @default(autoincrement())
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
 
   // Basic Information
-  name              String
-  email             String
+  name  String
+  email String
 
   // Project Details
   projectType       String
@@ -46,26 +46,27 @@ model Questionnaire {
   hostingDeployment Boolean
   additionalInfo    String?
 
-  createdAt   DateTime @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId, createdAt])
 }
 
 // -------- Message --------
 model Message {
-  id         Int      @id @default(autoincrement())
-  content    String
-  createdAt  DateTime @default(now())
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
 
   // sender/receiver
   senderId   Int?
   receiverId Int?
 
-  senderType String   // "USER" | "ADMIN"
+  // sender type — default so you don’t need to include it in code
+  senderType String @default("USER") // "USER" | "ADMIN"
 
   // relations
-  sender     User?    @relation("SentMessages", fields: [senderId], references: [id])
-  receiver   User?    @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  sender   User? @relation("SentMessages", fields: [senderId], references: [id])
+  receiver User? @relation("ReceivedMessages", fields: [receiverId], references: [id])
 }
 
 // -------- Password Reset Token --------

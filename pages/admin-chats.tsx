@@ -25,14 +25,14 @@ export default function AdminChats() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Load users
+ 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
         const res = await fetch("/api/users");
         if (res.ok) {
           const data = await res.json();
-          // Ensure all users start with unread = 0
+          
           setUsers(data.map((u: User) => ({ ...u, unread: u.unread || 0 })));
         }
       } catch (err) {
@@ -42,12 +42,12 @@ export default function AdminChats() {
     fetchUsers();
   }, []);
 
-  // Load messages for a user
+ 
   const selectUser = async (user: User) => {
     setSelectedUser(user);
     setSidebarOpen(false);
 
-    // Reset unread count when user is selected
+    
     setUsers((prev) =>
       prev.map((u) => (u.id === user.id ? { ...u, unread: 0 } : u))
     );
@@ -61,7 +61,7 @@ export default function AdminChats() {
       if (res.ok) {
         const data: Message[] = await res.json();
 
-        // Sort by createdAt ascending
+        
         data.sort(
           (a, b) =>
             new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
@@ -75,7 +75,7 @@ export default function AdminChats() {
     }
   };
 
-  // Poll messages every 5 seconds
+  
   useEffect(() => {
     if (!selectedUser) return;
 
@@ -85,16 +85,16 @@ export default function AdminChats() {
         if (res.ok) {
           const data: Message[] = await res.json();
 
-          // Sort messages
+        
           data.sort(
             (a, b) =>
               new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           );
 
-          // Detect new unread messages (only if chat not open)
+          
           setUsers((prev) =>
             prev.map((u) => {
-              if (u.id === selectedUser.id) return u; // active chat → don't increase unread
+              if (u.id === selectedUser.id) return u; 
               const prevCount = messages.filter(
                 (m) => m.senderId === u.id && m.senderType === "USER"
               ).length;
@@ -116,7 +116,7 @@ export default function AdminChats() {
     return () => clearInterval(interval);
   }, [selectedUser, messages]);
 
-  // Send a message
+ 
   const sendMessage = async () => {
     if (!newMsg.trim() || !selectedUser) return;
 
@@ -144,7 +144,7 @@ export default function AdminChats() {
 
   return (
     <div className="admin-chat-container">
-      {/* Sidebar */}
+    
       <div className={`sidebar ${sidebarOpen ? "open" : ""}`}>
         <h3>Users</h3>
         {users.map((u) => (
@@ -161,7 +161,7 @@ export default function AdminChats() {
         ))}
       </div>
 
-      {/* Chat Panel */}
+     
       <div className="chat-panel">
         <div className="chat-header">
           <button
@@ -212,8 +212,7 @@ export default function AdminChats() {
         )}
       </div>
 
-      {/* Styles (unchanged from yours, kept WhatsApp-like) */}
-      <style jsx>{`
+            <style jsx>{`
         .admin-chat-container {
           display: flex;
           height: 100vh;

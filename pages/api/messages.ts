@@ -7,28 +7,18 @@ import { authOptions } from "./auth/[...nextauth]";
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     const session = await getServerSession(req, res, authOptions);
+    if (!session?.user) return res.status(401).json({ error: "Not authenticated" });
 
-    if (!session?.user) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-
-    // -------------------- POST: Send a message --------------------
     if (req.method === "POST") {
       const { content, receiverId, senderType } = req.body;
-
-      if (!content) {
-        return res.status(400).json({ error: "Message content is required" });
-      }
+      if (!content) return res.status(400).json({ error: "Message content is required" });
 
       let senderId: number | null = null;
-
       if (senderType === "USER") {
         senderId = Number(session.user.id);
       } else if (senderType === "ADMIN") {
-        if (!session.user.isAdmin) {
-          return res.status(403).json({ error: "Not authorized as admin" });
-        }
-        senderId = null; // admin messages stored with null senderId
+        if (!session.user.isAdmin) return res.status(403).json({ error: "Not authorized as admin" });
+        senderId = null;
       }
 
       const message = await prisma.message.create({
@@ -39,46 +29,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           senderType,
         },
       });
-
       return res.status(201).json(message);
     }
 
-    // -------------------- GET: Fetch messages --------------------
     if (req.method === "GET") {
       let messages;
-
-      // Admin fetches messages for a specific user
       if (session.user.isAdmin) {
         const { userId } = req.query;
-
-        if (!userId) {
-          return res.status(400).json({ error: "User ID is required" });
-        }
+        if (!userId) return res.status(400).json({ error: "User ID is required" });
 
         messages = await prisma.message.findMany({
           where: {
             OR: [
-              { senderId: Number(userId), receiverId: null }, // messages from user to admin
-              { senderId: null, receiverId: Number(userId) }, // messages from admin to that user
+              { senderId: Number(userId), receiverId: null },
+              { senderId: null, receiverId: Number(userId) },
             ],
           },
           orderBy: { createdAt: "asc" },
         });
-      } 
-      // Regular user fetches their own messages
-      else {
+      } else {
         const userId = Number(session.user.id);
         messages = await prisma.message.findMany({
           where: {
-            OR: [
-              { senderId: userId },
-              { receiverId: userId },
-            ],
+            OR: [{ senderId: userId }, { receiverId: userId }],
           },
           orderBy: { createdAt: "asc" },
         });
       }
-
       return res.status(200).json(messages);
     }
 

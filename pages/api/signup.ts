@@ -17,22 +17,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ message: "All fields are required" });
     }
 
-    // check if email already exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return res.status(409).json({ message: "Email already registered" });
     }
 
-    // check if phone already exists
     const existingPhone = await prisma.user.findUnique({ where: { phone } });
     if (existingPhone) {
       return res.status(409).json({ message: "Phone already registered" });
     }
 
-    // hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // create user
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -53,9 +49,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    // Send SMS notification
     try {
-      const fullPhone = `${countryCode}${phone}`; // e.g. +2547xxxxxxx
+      const fullPhone = `${countryCode}${phone}`;
       await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/send-sms`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -66,12 +61,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     } catch (smsError) {
       console.error("SMS sending failed:", smsError);
-      // continue without failing signup
     }
 
-    return res
-      .status(201)
-      .json({ message: "User created successfully", user: newUser });
+    return res.status(201).json({ message: "User created successfully", user: newUser });
   } catch (error) {
     console.error("Signup error:", error);
     return res.status(500).json({ message: "Internal server error" });

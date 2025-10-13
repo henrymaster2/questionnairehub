@@ -33,22 +33,20 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Fetch user profile
   useEffect(() => {
     const fetchUser = async () => {
       try {
         const res = await fetch("/api/profile", { credentials: "include" });
         if (!res.ok) return;
         const data = await res.json();
-        setUser(data.user);
+        setUser(data.user ?? null);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching user:", err);
       }
     };
     fetchUser();
   }, []);
 
-  // Fetch submitted questionnaires
   useEffect(() => {
     const fetchQuestionnaires = async () => {
       try {
@@ -57,9 +55,9 @@ export default function Dashboard() {
         });
         if (!res.ok) return;
         const data = await res.json();
-        setQuestionnaires(data.questionnaires || []);
+        setQuestionnaires(Array.isArray(data.questionnaires) ? data.questionnaires : []);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching questionnaires:", err);
       } finally {
         setLoading(false);
       }
@@ -69,7 +67,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen flex bg-gradient-to-br from-indigo-900 via-teal-800 to-cyan-700 text-white relative">
-      {/* Sidebar (desktop) */}
+      {/* Sidebar (Desktop) */}
       <motion.aside
         initial={{ x: -250, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
@@ -78,25 +76,15 @@ export default function Dashboard() {
       >
         <h2 className="text-2xl font-bold text-cyan-300 mb-8">Menu</h2>
         <nav className="flex flex-col space-y-4">
-          <Link href="/profile" className="hover:text-cyan-400">
-            Profile
-          </Link>
-          <Link href="/questionnaire" className="hover:text-cyan-400">
-            Fill the Questionnaire
-          </Link>
-          <Link href="/chat" className="hover:text-cyan-400">
-            Chat with Developers
-          </Link>
-          <Link href="/help" className="hover:text-cyan-400">
-            Get Help
-          </Link>
-          <Link href="/updates" className="hover:text-cyan-400">
-            Updates
-          </Link>
+          <Link href="/profile" className="hover:text-cyan-400">Profile</Link>
+          <Link href="/questionnaire" className="hover:text-cyan-400">Fill the Questionnaire</Link>
+          <Link href="/chat" className="hover:text-cyan-400">Chat with Developers</Link>
+          <Link href="/help" className="hover:text-cyan-400">Get Help</Link>
+          <Link href="/updates" className="hover:text-cyan-400">Updates</Link>
         </nav>
       </motion.aside>
 
-      {/* Mobile Sidebar (slide-in) */}
+      {/* Mobile Sidebar */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.aside
@@ -114,21 +102,11 @@ export default function Dashboard() {
             </button>
             <h2 className="text-2xl font-bold text-cyan-300 mb-8">Menu</h2>
             <nav className="flex flex-col space-y-4">
-              <Link href="/profile" className="hover:text-cyan-400" onClick={() => setSidebarOpen(false)}>
-                Profile
-              </Link>
-              <Link href="/questionnaire" className="hover:text-cyan-400" onClick={() => setSidebarOpen(false)}>
-                Fill the Questionnaire
-              </Link>
-              <Link href="/chat" className="hover:text-cyan-400" onClick={() => setSidebarOpen(false)}>
-                Chat with Developers
-              </Link>
-              <Link href="/help" className="hover:text-cyan-400" onClick={() => setSidebarOpen(false)}>
-                Get Help
-              </Link>
-              <Link href="/updates" className="hover:text-cyan-400" onClick={() => setSidebarOpen(false)}>
-                Updates
-              </Link>
+              <Link href="/profile" className="hover:text-cyan-400" onClick={() => setSidebarOpen(false)}>Profile</Link>
+              <Link href="/questionnaire" className="hover:text-cyan-400" onClick={() => setSidebarOpen(false)}>Fill the Questionnaire</Link>
+              <Link href="/chat" className="hover:text-cyan-400" onClick={() => setSidebarOpen(false)}>Chat with Developers</Link>
+              <Link href="/help" className="hover:text-cyan-400" onClick={() => setSidebarOpen(false)}>Get Help</Link>
+              <Link href="/updates" className="hover:text-cyan-400" onClick={() => setSidebarOpen(false)}>Updates</Link>
             </nav>
           </motion.aside>
         )}
@@ -136,21 +114,18 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="flex-1 px-6 py-10 w-full">
-        {/* Header */}
         <motion.header
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ duration: 0.8 }}
           className="flex justify-between items-center mb-10"
         >
-          {/* Mobile Hamburger */}
           <button
             onClick={() => setSidebarOpen(true)}
             className="md:hidden px-4 py-2 rounded-lg neon-btn font-semibold"
           >
             ☰ Menu
           </button>
-
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-wide text-white drop-shadow-lg">
             Dashboard
           </h1>
@@ -171,7 +146,7 @@ export default function Dashboard() {
           </p>
         </motion.section>
 
-        {/* Submitted Questionnaires Section */}
+        {/* Submitted Questionnaires */}
         <motion.section
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
@@ -195,45 +170,17 @@ export default function Dashboard() {
                   key={q.id}
                   className="p-4 rounded-xl border border-white/20 shadow-md bg-white/10 text-white"
                 >
-                  <p>
-                    <strong>Name:</strong> {q.name}
-                  </p>
-                  <p>
-                    <strong>Email:</strong> {q.email}
-                  </p>
-                  <p>
-                    <strong>Project Type:</strong> {q.projectType}
-                  </p>
-                  <p>
-                    <strong>Description:</strong> {q.description}
-                  </p>
-                  {q.preferredTech && (
-                    <p>
-                      <strong>Technologies:</strong> {q.preferredTech}
-                    </p>
-                  )}
-                  <p>
-                    <strong>Budget:</strong> {q.budget}
-                  </p>
-                  <p>
-                    <strong>Timeline:</strong> {q.timeline}
-                  </p>
-                  <p>
-                    <strong>Communication:</strong> {q.communication}
-                  </p>
-                  <p>
-                    <strong>Backend Needed:</strong>{" "}
-                    {q.backendNeeded ? "Yes" : "No"}
-                  </p>
-                  <p>
-                    <strong>Hosting Deployment:</strong>{" "}
-                    {q.hostingDeployment ? "Yes" : "No"}
-                  </p>
-                  {q.additionalInfo && (
-                    <p>
-                      <strong>Additional Info:</strong> {q.additionalInfo}
-                    </p>
-                  )}
+                  <p><strong>Name:</strong> {q.name}</p>
+                  <p><strong>Email:</strong> {q.email}</p>
+                  <p><strong>Project Type:</strong> {q.projectType}</p>
+                  <p><strong>Description:</strong> {q.description}</p>
+                  {q.preferredTech && <p><strong>Technologies:</strong> {q.preferredTech}</p>}
+                  <p><strong>Budget:</strong> {q.budget}</p>
+                  <p><strong>Timeline:</strong> {q.timeline}</p>
+                  <p><strong>Communication:</strong> {q.communication}</p>
+                  <p><strong>Backend Needed:</strong> {q.backendNeeded ? "Yes" : "No"}</p>
+                  <p><strong>Hosting Deployment:</strong> {q.hostingDeployment ? "Yes" : "No"}</p>
+                  {q.additionalInfo && <p><strong>Additional Info:</strong> {q.additionalInfo}</p>}
                   <p className="text-sm text-gray-400">
                     Submitted on: {new Date(q.createdAt).toLocaleString()}
                   </p>

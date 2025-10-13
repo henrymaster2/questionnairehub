@@ -1,6 +1,6 @@
 // pages/profile.tsx
 import { useEffect, useState, ChangeEvent } from "react";
-import { useRouter } from "next/router";
+import { useRouter } from "next/router"; // ✅ use next/navigation if on App Router
 import { useSession, signOut } from "next-auth/react";
 
 type User = {
@@ -21,22 +21,22 @@ export default function Profile() {
   const [preview, setPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Redirect if unauthenticated
+  // Redirect unauthenticated users
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/login");
+      router.replace("/login");
     }
-  }, [status]);
+  }, [status, router]);
 
   // Fetch user profile
   const fetchUser = async () => {
     try {
       const res = await fetch("/api/profile", { cache: "no-store" });
-      if (!res.ok) throw new Error("Failed to fetch user");
+      if (!res.ok) throw new Error("Failed to fetch user profile");
       const data = await res.json();
       setUser(data.user);
     } catch (error) {
-      console.error(error);
+      console.error("Profile fetch error:", error);
     }
   };
 
@@ -91,8 +91,8 @@ export default function Profile() {
       setSelectedImage(null);
       setPreview(null);
     } catch (error) {
-      console.error(error);
-      alert("Failed to save profile picture.");
+      console.error("Profile update error:", error);
+      alert("Failed to save profile picture. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -103,7 +103,11 @@ export default function Profile() {
   };
 
   if (status === "loading" || !user)
-    return <p className="text-center mt-20 text-gray-300">Loading profile...</p>;
+    return (
+      <p className="text-center mt-20 text-gray-300">
+        Loading profile...
+      </p>
+    );
 
   const joinedDate = user.createdAt ? new Date(user.createdAt) : null;
 
@@ -120,23 +124,31 @@ export default function Profile() {
             {preview || user.profilePic ? (
               <img
                 src={preview || user.profilePic}
-                alt="Profile"
+                alt="Profile picture"
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src =
+                    "https://via.placeholder.com/150?text=No+Image";
+                }}
               />
             ) : (
               <span className="text-gray-400 text-3xl">👤</span>
             )}
           </div>
 
-          <label className="mt-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg cursor-pointer text-sm transition">
+          <label
+            htmlFor="file-upload"
+            className="mt-2 px-4 py-2 bg-cyan-500 hover:bg-cyan-600 text-white rounded-lg cursor-pointer text-sm transition"
+          >
             {selectedImage ? selectedImage.name : "Choose Profile Picture"}
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-            />
           </label>
+          <input
+            id="file-upload"
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+          />
 
           {selectedImage && (
             <button
@@ -157,17 +169,14 @@ export default function Profile() {
             <span className="font-semibold">Name:</span>
             <span>{user.name}</span>
           </div>
-
           <div className="flex justify-between">
             <span className="font-semibold">Email:</span>
             <span>{user.email}</span>
           </div>
-
           <div className="flex justify-between">
             <span className="font-semibold">Phone:</span>
             <span>{user.phone}</span>
           </div>
-
           <div className="flex justify-between">
             <span className="font-semibold">Joined:</span>
             <span>

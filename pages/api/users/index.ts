@@ -1,3 +1,4 @@
+// pages/api/users/index.ts
 import { NextApiRequest, NextApiResponse } from "next";
 import prisma from "@/lib/prisma";
 
@@ -6,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const users = await prisma.user.findMany({
-      where: { role: "USER" }, // only fetch normal users
+      where: { role: "USER" },
       select: { id: true, name: true, email: true },
       orderBy: { createdAt: "desc" },
     });
